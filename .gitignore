@@ -1,6 +1,5 @@
 /.venv
 ./debug.py
-./data
 ./config.py
 ./cron.log
 .idea
