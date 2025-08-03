@@ -16,7 +16,9 @@ COPY main.py /app/main.py
 RUN chmod 0644 /etc/cron.d/crontab
 RUN crontab /etc/cron.d/crontab
 RUN touch /var/log/cron.log
-
-CMD cron && tail -f /var/log/cron.log
+#
+#CMD cron && tail -f /var/log/cron.log
 #CMD ["python","/app/main.py"]
 #CMD ["cron","&&","tail","-f","/var/log/cron.log"]
+EXPOSE 5000
+CMD ["python3", "api.py"]

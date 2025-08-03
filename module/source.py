@@ -38,7 +38,6 @@ def news_detail(link_url):
 
     resp = requests.get(link_url)
     resp.encoding = 'utf-8'
-    #print(resp.text)
     soup = BeautifulSoup(resp.text, 'lxml')
     news_title = soup.find('h1', attrs={'class':'title'}).text
     news_content = soup.find("div", attrs={'class':'story'}).find_all("p")
@@ -49,15 +48,16 @@ def news_detail(link_url):
     text = "\n"
     for p in news_content:
         """
-        .string屬性說明：
-        (1) 若當前tag節點底下沒有其他tag子節點，會直接抓取內容(返回"NavigableString")
-        (2) 若當前tag節點底下只有唯一的一個tag子節點，也會直接抓取tag子節點的內容(返回"NavigableString")
-        (3) 但若當前tag節點底下還有很多個tag子節點，.string就無法判斷，(返回"None")
+            .string屬性說明：
+            (1) 若當前tag節點底下沒有其他tag子節點，會直接抓取內容(返回"NavigableString")
+            (2) 若當前tag節點底下只有唯一的一個tag子節點，也會直接抓取tag子節點的內容(返回"NavigableString")
+            (3) 但若當前tag節點底下還有很多個tag子節點，.string就無法判斷，(返回"None")
         """
         if ((p.string) is not None):
             text += p.string
             text += '\n'
     return news_title,image_link,text
+
 
 
 def news_parser(browser):
@@ -74,9 +74,10 @@ def news_parser(browser):
     history.to_csv(f'{LOG_DIR}/log.csv',index=False)
 
 
-def insert_news_to_log(title,news_link,image_link,llm_content,how_long_ago):
+def insert_news_to_log(title,news_link,image_link,content,llm_content,how_long_ago):
     news_df = pd.read_csv(f'{LOG_DIR}/log.csv')
-    news_df = pd.concat([pd.DataFrame([[datetime.datetime.now(), title,news_link,image_link,llm_content,how_long_ago]], columns=news_df.columns), news_df],
+    news_df = pd.concat([pd.DataFrame([[datetime.datetime.now(), title,news_link,image_link,
+                                        content,llm_content,how_long_ago]], columns=news_df.columns), news_df],
                             ignore_index=True)
     news_df.to_csv(f'{LOG_DIR}/log.csv', index=False)
 
@@ -89,7 +90,7 @@ class ETToday:
         self.news_block = None
         self.date_block = None
         self.history_news = None
-        self.url = "https://www.ettoday.net/news/focus/社會/"
+        self.url = "https://www.ettoday.net/news/focus/生活/"
         self.browser = browser = webdriver.Chrome(service=service, options=options)
         self.last_height = self.browser.execute_script("return document.body.scrollHeight;")
         self.browser.get(self.url)
@@ -152,7 +153,7 @@ class ETToday:
 
                     if '小時前' in time_str:
                         hours_ago = int(time_str.split('小時前')[0])
-                        if hours_ago <= 8:
+                        if hours_ago <= 1:
                             title = link_tag.text.strip()
                             href = link_tag.get_attribute('href')
                             recent_news_links.append({'title': title, 'url': href, 'time_ago': time_str})
@@ -174,15 +175,18 @@ class ETToday:
 
     def output(self,chain):
         history = get_history_news()
-        news_list = self.get_recent_news_with_scrolling(scroll_count=8)
+        news_list = self.get_recent_news_with_scrolling(scroll_count=3)
         for news in news_list:
             if news['url'] not in history['news_url'].values:
-                title, img_url, content = news_detail(news['url'])
-                question = (content)
-                llm_content = chain.invoke({"input_sentence": question})
-                insert_news_to_log(title, news['url'], img_url,llm_content['text'],news['time_ago'])
-                print(title)
-                print(img_url)
-                print(content)
+                try:
+                    title, img_url, content = news_detail(news['url'])
+
+                    llm_content = chain(content)
+                    insert_news_to_log(title, news['url'], img_url,content,llm_content.text,news['time_ago'])
+                    print(news['title'])
+                    print(llm_content.text)
+                    print("*****************************************************")
+                except Exception as e:
+                    print(e)
 
 #

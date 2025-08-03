@@ -5,3 +5,4 @@
 ./cron.log
 .idea
 ./LLM/models/
+./data/log.csv
