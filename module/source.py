@@ -36,6 +36,14 @@ def write_sql(df):
     engine = create_engine(db_connection_str)
     df.to_sql(name='news_curl', con=engine, if_exists='append', index=False)
 
+def get_data():
+    engine = create_engine(
+        f'mysql+pymysql://{user}:{password}@{host}:{port}/{database}'
+    )
+    query = ("""SELECT * FROM news_curl ORDER BY `time` DESC LIMIT 100""")
+
+    df = pd.read_sql_query(query, engine)
+    return df
 
 def user_agent():
     ua = UserAgent(os='windows', browsers='chrome')
@@ -185,7 +193,7 @@ class ETToday:
         self.date_block = all_news.find_all('span', attrs={'class': 'date'})
 
     def output(self,scroll_count,chain):
-        history = get_history_news()
+        history = get_data()
         news_list = self.get_recent_news_with_scrolling(scroll_count=scroll_count)
         for news in news_list:
             if news['url'] not in history['news_url'].values:
