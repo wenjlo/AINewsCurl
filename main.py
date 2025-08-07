@@ -1,4 +1,3 @@
-from langchain.chains.question_answering.map_reduce_prompt import messages
 from module.source import ETToday
 from LLM.llm import LargeLanguageModel,gemini
 from langchain.prompts import PromptTemplate
@@ -11,4 +10,4 @@ prompt_template = PromptTemplate.from_template(prompt_news)
 
 if __name__=="__main__":
     news = ETToday()
-    news.output(gemini)
+    news.output(scroll_count=8,chain=gemini)

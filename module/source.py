@@ -2,7 +2,10 @@ import time
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import re,emoji
-from config import TOKEN,GROUP_ID,LOG_DIR
+
+from sqlalchemy.dialects.mssql.information_schema import columns
+
+from config import TOKEN,GROUP_ID,LOG_DIR,user,password,host,port,database
 from fake_useragent import UserAgent
 import requests
 import pandas as pd
@@ -11,7 +14,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
-
+from sqlalchemy import create_engine
 
 service = Service(ChromeDriverManager().install())
 options = webdriver.ChromeOptions()
@@ -25,6 +28,14 @@ options.add_argument('--no-sandbox')
 options.add_argument('--disable-dev-shm-usage')
 
 SCROLL_PAUSE_TIME = 1.8
+
+
+def write_sql(df):
+    # Replace with your MySQL credentials and database details
+    db_connection_str = f'mysql+pymysql://{user}:{password}@{host}:{port}/{database}'
+    engine = create_engine(db_connection_str)
+    df.to_sql(name='news_curl', con=engine, if_exists='append', index=False)
+
 
 def user_agent():
     ua = UserAgent(os='windows', browsers='chrome')
@@ -153,7 +164,7 @@ class ETToday:
 
                     if '小時前' in time_str:
                         hours_ago = int(time_str.split('小時前')[0])
-                        if hours_ago <= 1:
+                        if hours_ago <= 8:
                             title = link_tag.text.strip()
                             href = link_tag.get_attribute('href')
                             recent_news_links.append({'title': title, 'url': href, 'time_ago': time_str})
@@ -173,9 +184,9 @@ class ETToday:
         self.news_block = all_news.find_all('div', attrs={'class': 'piece clearfix'})
         self.date_block = all_news.find_all('span', attrs={'class': 'date'})
 
-    def output(self,chain):
+    def output(self,scroll_count,chain):
         history = get_history_news()
-        news_list = self.get_recent_news_with_scrolling(scroll_count=3)
+        news_list = self.get_recent_news_with_scrolling(scroll_count=scroll_count)
         for news in news_list:
             if news['url'] not in history['news_url'].values:
                 try:
@@ -183,9 +194,13 @@ class ETToday:
 
                     llm_content = chain(content)
                     insert_news_to_log(title, news['url'], img_url,content,llm_content.text,news['time_ago'])
-                    print(news['title'])
-                    print(llm_content.text)
+                    df = pd.DataFrame(data = [[datetime.datetime.now(),title, news['url'], img_url,content,llm_content.text,news['time_ago']]],
+                                      columns=['time','title','news_url','image','content','description','how_long_ago'])
+                    write_sql(df)
+                    print("標題 :",title)
+                    print("摘要 :",llm_content.text)
                     print("*****************************************************")
+                    time.sleep(15)
                 except Exception as e:
                     print(e)
 
