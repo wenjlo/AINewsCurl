@@ -21,14 +21,14 @@ RUN apt install dos2unix
 RUN find -type f -print0 | xargs -0 dos2unix
 RUN pip install -r requirements.txt
 
-COPY crontab /etc/cron.d/schedule-cron
-COPY entrypoint.sh /entrypoint.sh
-RUN touch /var/log/cron.log
-RUN chmod 0644 /etc/cron.d/schedule-cron \
-    && chmod +x /entrypoint.sh \
-    && crontab /etc/cron.d/schedule-cron
-ENTRYPOINT ["/entrypoint.sh"]
-
+#COPY crontab /etc/cron.d/schedule-cron
+#COPY entrypoint.sh /entrypoint.sh
+#RUN touch /var/log/cron.log
+#RUN chmod 0644 /etc/cron.d/schedule-cron \
+#    && chmod +x /entrypoint.sh \
+#    && crontab /etc/cron.d/schedule-cron
+#ENTRYPOINT ["/entrypoint.sh"]
 #
-#CMD cron && tail -f /var/log/cron.log
-CMD ["cron","&&","tail","-f","/var/log/cron.log"]
+##
+##CMD cron && tail -f /var/log/cron.log
+#CMD ["cron","&&","tail","-f","/var/log/cron.log"]
