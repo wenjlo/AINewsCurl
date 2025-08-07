@@ -172,7 +172,7 @@ class ETToday:
 
                     if '小時前' in time_str:
                         hours_ago = int(time_str.split('小時前')[0])
-                        if hours_ago <= 8:
+                        if hours_ago <= 1:
                             title = link_tag.text.strip()
                             href = link_tag.get_attribute('href')
                             recent_news_links.append({'title': title, 'url': href, 'time_ago': time_str})
@@ -207,7 +207,7 @@ class ETToday:
                     print("標題 :",title)
                     print("摘要 :",llm_content.text)
                     print("*****************************************************")
-                    time.sleep(15)
+                    time.sleep(5)
                 except Exception as e:
                     print(e)
 
