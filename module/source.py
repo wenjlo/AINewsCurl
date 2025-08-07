@@ -172,7 +172,7 @@ class ETToday:
 
                     if '小時前' in time_str:
                         hours_ago = int(time_str.split('小時前')[0])
-                        if hours_ago <= 1:
+                        if hours_ago <= 2:
                             title = link_tag.text.strip()
                             href = link_tag.get_attribute('href')
                             recent_news_links.append({'title': title, 'url': href, 'time_ago': time_str})
@@ -195,6 +195,7 @@ class ETToday:
     def output(self,scroll_count,chain):
         history = get_data()
         news_list = self.get_recent_news_with_scrolling(scroll_count=scroll_count)
+        print(f"... found {len(news_list) } news.")
         for news in news_list:
             if news['url'] not in history['news_url'].values:
                 try:
