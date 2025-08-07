@@ -1,15 +1,17 @@
 from flask import Flask
 import pandas as pd
 from flask_cors import CORS
-
+from module.source import ETToday
+from LLM.llm import LargeLanguageModel,gemini
+from langchain.prompts import PromptTemplate
+from LLM.prompt import prompt_news
+from langchain.chains import LLMChain
 app = Flask(__name__)
 CORS(app)
-@app.route('/api/news', methods=['GET'])
-def get_news():
-    data = pd.read_csv('./data/log.csv')
-    data = data.sort_values(by=['time'],ascending=False).head(16)
-    return data.to_json(orient='records', force_ascii=False)
-
+@app.route('/', methods=['GET'])
+def curl():
+    news = ETToday()
+    news.output(scroll_count=3,chain=gemini)
 
 if __name__ == '__main__':
     app.run(port=5000, host="0.0.0.0")

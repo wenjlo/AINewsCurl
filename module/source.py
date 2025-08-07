@@ -201,7 +201,6 @@ class ETToday:
                     title, img_url, content = news_detail(news['url'])
 
                     llm_content = chain(content)
-                    insert_news_to_log(title, news['url'], img_url,content,llm_content.text,news['time_ago'])
                     df = pd.DataFrame(data = [[datetime.datetime.now(),title, news['url'], img_url,content,llm_content.text,news['time_ago']]],
                                       columns=['time','title','news_url','image','content','description','how_long_ago'])
                     write_sql(df)

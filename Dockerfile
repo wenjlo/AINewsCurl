@@ -20,7 +20,8 @@ RUN apt-get -y install google-chrome-stable
 RUN apt install dos2unix
 RUN find -type f -print0 | xargs -0 dos2unix
 RUN pip install -r requirements.txt
-
+EXPOSE 5000
+CMD ["python3", "api.py"]
 #COPY crontab /etc/cron.d/schedule-cron
 #COPY entrypoint.sh /entrypoint.sh
 #RUN touch /var/log/cron.log

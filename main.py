@@ -10,4 +10,4 @@ prompt_template = PromptTemplate.from_template(prompt_news)
 
 if __name__=="__main__":
     news = ETToday()
-    news.output(scroll_count=8,chain=gemini)
+    news.output(scroll_count=3,chain=gemini)
