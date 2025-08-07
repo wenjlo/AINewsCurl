@@ -6,6 +6,6 @@ LOG_DIR = './data'
 
 user = "doadmin"
 password = "AVNS_YQAHBwiPgaWEmIQCdNX"
-host = "private-db-mysql-singapore-do-user-24326842-0.m.db.ondigitalocean.com"
+host = "db-mysql-singapore-do-user-24326842-0.m.db.ondigitalocean.com"
 port = "25060"
 database = "news"
