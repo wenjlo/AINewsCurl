@@ -1,9 +1,7 @@
 import time
 from bs4 import BeautifulSoup
 from selenium import webdriver
-import re,emoji
-
-from sqlalchemy.dialects.mssql.information_schema import columns
+import emoji
 
 from config import TOKEN,GROUP_ID,LOG_DIR,user,password,host,port,database
 from fake_useragent import UserAgent
@@ -15,6 +13,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 from sqlalchemy import create_engine
+import pymysql
 
 service = Service(ChromeDriverManager().install())
 options = webdriver.ChromeOptions()
@@ -44,6 +43,26 @@ def get_data():
 
     df = pd.read_sql_query(query, engine)
     return df
+
+def delete_data():
+    connection = pymysql.connect(host=host, port=int(port),
+                                 user=user, password=password, database=database)
+
+    cursor = connection.cursor()
+    query = """
+             WITH RankedData AS (
+                SELECT
+                    *,
+                    ROW_NUMBER() OVER(ORDER BY `time` DESC) AS rn
+                FROM
+                    news_curl
+            )
+            DELETE FROM news_curl 
+            WHERE news_url IN (SELECT news_url  FROM RankedData WHERE rn > 100)
+            ;"""
+    cursor.execute(query)
+    connection.commit()
+    cursor.close()
 
 def user_agent():
     ua = UserAgent(os='windows', browsers='chrome')
@@ -211,5 +230,5 @@ class ETToday:
                     time.sleep(5)
                 except Exception as e:
                     print(e)
-
-#
+        # keep latest 100 news.
+        delete_data()
