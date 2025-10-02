@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 import emoji
 
-from config import TOKEN,GROUP_ID,LOG_DIR,user,password,host,port,database
+from config import TOKEN, GROUP_ID, LOG_DIR, user, password, host, port, database
 from fake_useragent import UserAgent
 import requests
 import pandas as pd
@@ -17,7 +17,7 @@ import pymysql
 
 service = Service(ChromeDriverManager().install())
 options = webdriver.ChromeOptions()
-options.add_argument("--headless")
+# options.add_argument("--headless")
 options.add_argument("--disable-gpu")
 options.add_argument("--disable-extensions")
 options.add_argument("--disable-infobars")
@@ -35,6 +35,7 @@ def write_sql(df):
     engine = create_engine(db_connection_str)
     df.to_sql(name='news_curl', con=engine, if_exists='append', index=False)
 
+
 def get_data():
     engine = create_engine(
         f'mysql+pymysql://{user}:{password}@{host}:{port}/{database}'
@@ -43,6 +44,7 @@ def get_data():
 
     df = pd.read_sql_query(query, engine)
     return df
+
 
 def delete_data():
     connection = pymysql.connect(host=host, port=int(port),
@@ -64,6 +66,7 @@ def delete_data():
     connection.commit()
     cursor.close()
 
+
 def user_agent():
     ua = UserAgent(os='windows', browsers='chrome')
     userAgent = ua.chrome
@@ -72,14 +75,15 @@ def user_agent():
     options.add_argument(f'user-agent={userAgent}')
     return options
 
+
 def news_detail(link_url):
 
     resp = requests.get(link_url)
     resp.encoding = 'utf-8'
     soup = BeautifulSoup(resp.text, 'lxml')
-    news_title = soup.find('h1', attrs={'class':'title'}).text
-    news_content = soup.find("div", attrs={'class':'story'}).find_all("p")
-    image_link = soup.find("div", attrs={'class':'story'}).find_all("img")[0]
+    news_title = soup.find('h1', attrs={'class': 'title'}).text
+    news_content = soup.find("div", attrs={'class': 'story'}).find_all("p")
+    image_link = soup.find("div", attrs={'class': 'story'}).find_all("img")[0]
     image_link = image_link['src']
     if "https:" not in image_link:
         image_link = "https:" + image_link
@@ -94,30 +98,32 @@ def news_detail(link_url):
         if ((p.string) is not None):
             text += p.string
             text += '\n'
-    return news_title,image_link,text
-
+    return news_title, image_link, text
 
 
 def news_parser(browser):
     history = pd.read_csv(f"{LOG_DIR}/log.csv")
     html = browser.page_source
-    soup = BeautifulSoup(html,"lxml")
-    all_news = soup.find("div", attrs={'class': 'block block_1 infinite_scroll'})
+    soup = BeautifulSoup(html, "lxml")
+    all_news = soup.find(
+        "div", attrs={'class': 'block block_1 infinite_scroll'})
     news_block = all_news.find_all('div', attrs={'class': 'piece clearfix'})
     for n in news_block:
         news_body = n.find('h3')
         external_link = news_body.a["href"]
         if external_link not in history['news_url']:
-            history = pd.concat([pd.DataFrame([[datetime.datetime.now(),externalLink]],columns=history.columns),history],ignore_index=True)
-    history.to_csv(f'{LOG_DIR}/log.csv',index=False)
+            history = pd.concat([pd.DataFrame([[datetime.datetime.now(
+            ), externalLink]], columns=history.columns), history], ignore_index=True)
+    history.to_csv(f'{LOG_DIR}/log.csv', index=False)
 
 
-def insert_news_to_log(title,news_link,image_link,content,llm_content,how_long_ago):
+def insert_news_to_log(title, news_link, image_link, content, llm_content, how_long_ago):
     news_df = pd.read_csv(f'{LOG_DIR}/log.csv')
-    news_df = pd.concat([pd.DataFrame([[datetime.datetime.now(), title,news_link,image_link,
-                                        content,llm_content,how_long_ago]], columns=news_df.columns), news_df],
-                            ignore_index=True)
+    news_df = pd.concat([pd.DataFrame([[datetime.datetime.now(), title, news_link, image_link,
+                                        content, llm_content, how_long_ago]], columns=news_df.columns), news_df],
+                        ignore_index=True)
     news_df.to_csv(f'{LOG_DIR}/log.csv', index=False)
+
 
 def get_history_news():
     return pd.read_csv(f'{LOG_DIR}/log.csv')
@@ -129,23 +135,26 @@ class ETToday:
         self.date_block = None
         self.history_news = None
         self.url = "https://www.ettoday.net/news/focus/生活/"
-        self.browser = browser = webdriver.Chrome(service=service, options=options)
-        self.last_height = self.browser.execute_script("return document.body.scrollHeight;")
+        self.browser = browser = webdriver.Chrome(
+            service=service, options=options)
+        self.last_height = self.browser.execute_script(
+            "return document.body.scrollHeight;")
         self.browser.get(self.url)
         self.robot_emoji = emoji.emojize(":robot_face")
-
 
     def news_cache(self):
         html = self.browser.page_source
         soup = BeautifulSoup(html, "lxml")
-        all_news = soup.find("div", attrs={'class': 'block block_1 infinite_scroll'})
-        news_block = all_news.find_all('div', attrs={'class': 'piece clearfix'})
-        news_df = pd.DataFrame(columns=['time','news_url'])
+        all_news = soup.find(
+            "div", attrs={'class': 'block block_1 infinite_scroll'})
+        news_block = all_news.find_all(
+            'div', attrs={'class': 'piece clearfix'})
+        news_df = pd.DataFrame(columns=['time', 'news_url'])
         for n in news_block:
             news_body = n.find('h3')
             news_link = news_body.a["href"]
             news_df = pd.concat([pd.DataFrame([[datetime.datetime.now(), news_link]], columns=news_df.columns), news_df],
-                            ignore_index=True)
+                                ignore_index=True)
         news_df.to_csv(f'{LOG_DIR}/log.csv', index=False)
 
     def get_recent_news_with_scrolling(self, scroll_count=3):
@@ -168,7 +177,8 @@ class ETToday:
             # 每次下滑後，等待 2 秒讓內容載入
             time.sleep(2)
 
-        news_items = self.browser.find_elements(By.CSS_SELECTOR, 'div.piece.clearfix, div.part_list_3 h3')
+        news_items = self.browser.find_elements(
+            By.CSS_SELECTOR, 'div.piece.clearfix, div.part_list_3 h3')
 
         recent_news_links = []
 
@@ -187,48 +197,52 @@ class ETToday:
                         if minutes_ago <= 60:
                             title = link_tag.text.strip()
                             href = link_tag.get_attribute('href')
-                            recent_news_links.append({'title': title, 'url': href, 'time_ago': time_str})
+                            recent_news_links.append(
+                                {'title': title, 'url': href, 'time_ago': time_str})
 
                     if '小時前' in time_str:
                         hours_ago = int(time_str.split('小時前')[0])
                         if hours_ago <= 2:
                             title = link_tag.text.strip()
                             href = link_tag.get_attribute('href')
-                            recent_news_links.append({'title': title, 'url': href, 'time_ago': time_str})
+                            recent_news_links.append(
+                                {'title': title, 'url': href, 'time_ago': time_str})
 
             except Exception as e:
                 # 忽略那些找不到標籤的項目
                 print(e)
-
 
         return recent_news_links
 
     def html(self):
         html = self.browser.page_source
         soup = BeautifulSoup(html, "lxml")
-        all_news = soup.find("div", attrs={'class': 'block block_1 infinite_scroll'})
+        all_news = soup.find(
+            "div", attrs={'class': 'block block_1 infinite_scroll'})
 
-        self.news_block = all_news.find_all('div', attrs={'class': 'piece clearfix'})
+        self.news_block = all_news.find_all(
+            'div', attrs={'class': 'piece clearfix'})
         self.date_block = all_news.find_all('span', attrs={'class': 'date'})
 
-    def output(self,scroll_count,chain):
-        history = get_data()
-        news_list = self.get_recent_news_with_scrolling(scroll_count=scroll_count)
+    def output(self, scroll_count, chain):
+        # history = get_data()
+        news_list = self.get_recent_news_with_scrolling(
+            scroll_count=scroll_count)
         print(f"... found {len(news_list) } news.")
         for news in news_list:
-            if news['url'] not in history['news_url'].values:
-                try:
-                    title, img_url, content = news_detail(news['url'])
+            # if news['url'] not in history['news_url'].values:
+            try:
+                title, img_url, content = news_detail(news['url'])
 
-                    llm_content = chain(content)
-                    df = pd.DataFrame(data = [[datetime.datetime.now(),title, news['url'], img_url,content,llm_content.text,news['time_ago']]],
-                                      columns=['time','title','news_url','image','content','description','how_long_ago'])
-                    write_sql(df)
-                    print("標題 :",title)
-                    print("摘要 :",llm_content.text)
-                    print("*****************************************************")
-                    time.sleep(5)
-                except Exception as e:
-                    print(e)
+                llm_content = chain(content)
+                # df = pd.DataFrame(data=[[datetime.datetime.now(), title, news['url'], img_url, content, llm_content.text, news['time_ago']]],
+                #                   columns=['time', 'title', 'news_url', 'image', 'content', 'description', 'how_long_ago'])
+                # write_sql(df)
+                print("標題 :", title)
+                print("摘要 :", llm_content.text)
+                print("*****************************************************")
+                time.sleep(5)
+            except Exception as e:
+                print(e)
         # keep latest 100 news.
-        delete_data()
+        # delete_data()
