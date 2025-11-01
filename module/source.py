@@ -226,7 +226,7 @@ class ETToday:
             'div', attrs={'class': 'piece clearfix'})
         self.date_block = all_news.find_all('span', attrs={'class': 'date'})
 
-    def output(self, scroll_count, chain):
+    def output(self, scroll_count):
         # history = get_data()
         news_list = self.get_recent_news_with_scrolling(
             scroll_count=scroll_count)
@@ -236,12 +236,11 @@ class ETToday:
             try:
                 title, img_url, content = news_detail(news['url'])
 
-                llm_content = chain(content)
                 # df = pd.DataFrame(data=[[datetime.datetime.now(), title, news['url'], img_url, content, llm_content.text, news['time_ago']]],
                 #                   columns=['time', 'title', 'news_url', 'image', 'content', 'description', 'how_long_ago'])
                 # write_sql(df)
                 print("標題 :", title)
-                print("摘要 :", llm_content.text)
+                print("摘要 :", content)
                 print("*****************************************************")
                 time.sleep(5)
             except Exception as e:
