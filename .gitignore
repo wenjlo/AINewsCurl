@@ -5,3 +5,4 @@
 .idea
 ./LLM/models/
 ./data/log.csv
+__pycache__

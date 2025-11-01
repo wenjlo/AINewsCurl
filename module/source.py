@@ -240,7 +240,7 @@ class ETToday:
                 #                   columns=['time', 'title', 'news_url', 'image', 'content', 'description', 'how_long_ago'])
                 # write_sql(df)
                 print("標題 :", title)
-                print("摘要 :", content)
+                print("內容 :", content)
                 print("*****************************************************")
                 time.sleep(5)
             except Exception as e:
