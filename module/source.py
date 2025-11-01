@@ -17,7 +17,7 @@ import pymysql
 
 service = Service(ChromeDriverManager().install())
 options = webdriver.ChromeOptions()
-options.add_argument("--headless")
+# options.add_argument("--headless")
 options.add_argument("--disable-gpu")
 options.add_argument("--disable-extensions")
 options.add_argument("--disable-infobars")
@@ -211,24 +211,16 @@ class ETToday:
         self.news_block = all_news.find_all('div', attrs={'class': 'piece clearfix'})
         self.date_block = all_news.find_all('span', attrs={'class': 'date'})
 
-    def output(self,scroll_count,chain):
-        history = get_data()
+    def output(self,scroll_count):
         news_list = self.get_recent_news_with_scrolling(scroll_count=scroll_count)
         print(f"... found {len(news_list) } news.")
         for news in news_list:
-            if news['url'] not in history['news_url'].values:
-                try:
-                    title, img_url, content = news_detail(news['url'])
+            try:
+                title, img_url, content = news_detail(news['url'])
+                print("標題 :",title)
+                print("內容 :",content)
+                print("*****************************************************")
+                time.sleep(5)
+            except Exception as e:
+                print(e)
 
-                    llm_content = chain(content)
-                    df = pd.DataFrame(data = [[datetime.datetime.now(),title, news['url'], img_url,content,llm_content.text,news['time_ago']]],
-                                      columns=['time','title','news_url','image','content','description','how_long_ago'])
-                    write_sql(df)
-                    print("標題 :",title)
-                    print("摘要 :",llm_content.text)
-                    print("*****************************************************")
-                    time.sleep(5)
-                except Exception as e:
-                    print(e)
-        # keep latest 100 news.
-        delete_data()
